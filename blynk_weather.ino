@@ -21,9 +21,11 @@ BlynkTimer timer;
 void setup(void) {
   /* Initializes the Serial communication */
   Serial.begin(115200);
+  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(2, OUTPUT);
+  digitalWrite(2, LOW);
   Serial.println("\nConnecting to Blynk");
   Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
-  pinMode(LED_BUILTIN, OUTPUT);
   iaqSensor.begin(BME68X_I2C_ADDR_LOW, Wire);
   output = "BSEC library version " + String(iaqSensor.version.major) + "." + String(iaqSensor.version.minor) + "." + String(iaqSensor.version.major_bugfix) + "." + String(iaqSensor.version.minor_bugfix);
   Serial.println(output);
@@ -54,8 +56,8 @@ void setup(void) {
 
   getSensorValues();
 
-  // Setup a function to be called every 60 seconds
-  timer.setInterval(60000L, getSensorValues);
+  // Setup a function to be called every 30 seconds
+  timer.setInterval(30000L, getSensorValues);
 }
 
 // Function that is looped forever
@@ -73,18 +75,8 @@ void getSensorValues() {
     Blynk.virtualWrite(V2, iaqSensor.temperature);
     Blynk.virtualWrite(V3, iaqSensor.humidity);
     Blynk.virtualWrite(V4, iaqSensor.pressure / 100);  //Dividing by 100 to convert Pa to hPa
-
-    if (iaqSensor.stabStatus == 1.00) {
-      Blynk.virtualWrite(V5, "Finished");
-    } else {
-      Blynk.virtualWrite(V5, "Ongoing");
-    }
-
-    if (iaqSensor.runInStatus == 1.00) {
-      Blynk.virtualWrite(V6, "Finished");
-    } else {
-      Blynk.virtualWrite(V6, "Ongoing");
-    }
+    Blynk.virtualWrite(V5, iaqSensor.co2Equivalent);
+    Blynk.virtualWrite(V6, iaqSensor.breathVocEquivalent);
 
     output = String(time_trigger);
     output += ", " + String(iaqSensor.iaq);
@@ -148,4 +140,5 @@ void errLeds(void) {
 // This function is called every time the device is connected to the Blynk.Cloud
 BLYNK_CONNECTED() {
   Serial.println("Connected to Blynk");
+  digitalWrite(2, HIGH);
 }
